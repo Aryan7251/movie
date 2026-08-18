@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import Admin from '../models/Admin.js';
 
+let mongodInstance = null;
+
 const seedInitialAdmin = async () => {
   try {
     const adminExists = await Admin.findOne();
@@ -19,14 +21,38 @@ const seedInitialAdmin = async () => {
 };
 
 const connectDB = async () => {
+  const uri = process.env.MONGODB_URI;
+  const isCustomUri = uri && (uri.startsWith('mongodb://') || uri.startsWith('mongodb+srv://')) && !uri.includes('<db_username>');
+
+  if (isCustomUri) {
+    try {
+      console.log('Connecting to configured MongoDB...');
+      const conn = await mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 5000
+      });
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+      await seedInitialAdmin();
+      return;
+    } catch (error) {
+      console.error(`MongoDB connection error to remote URI: ${error.message}`);
+      console.log('Falling back to embedded zero-config database...');
+    }
+  }
+
+  // Fallback to embedded in-memory MongoDB
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/movie-streaming');
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log('Starting embedded zero-config MongoDB database...');
+    const { MongoMemoryServer } = await import('mongodb-memory-server');
+    mongodInstance = await MongoMemoryServer.create();
+    const fallbackUri = mongodInstance.getUri();
+    const conn = await mongoose.connect(fallbackUri);
+    console.log(`Embedded MongoDB Connected: ${conn.connection.host}`);
     await seedInitialAdmin();
-  } catch (error) {
-    console.error(`MongoDB connection error: ${error.message}`);
+  } catch (embeddedErr) {
+    console.error('Failed to initialize embedded database:', embeddedErr.message);
   }
 };
 
 export default connectDB;
+
 
