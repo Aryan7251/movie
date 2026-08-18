@@ -1,0 +1,25 @@
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.error-icon {
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+.retry-btn {
+  margin-top: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.retry-btn:hover {
+  background: var(--border);
+  color: white;
+}

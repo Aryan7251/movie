@@ -1,0 +1,19 @@
+.preroll-ad-container {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.preroll-ad-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.preroll-ad-content img {
+  max-width: 80%;
+  max-height: 60vh;
+}

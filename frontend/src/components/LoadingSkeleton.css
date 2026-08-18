@@ -1,0 +1,38 @@
+.skeleton-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 3rem;
+}
+@media (min-width: 640px) { .skeleton-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 768px) { .skeleton-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1024px) { .skeleton-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 1400px) { .skeleton-grid { grid-template-columns: repeat(6, 1fr); } }
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.skeleton-poster {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+.skeleton-text {
+  height: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+.skeleton-text.title { width: 80%; }
+.skeleton-text.meta { width: 50%; }
+
+.pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
