@@ -9,10 +9,10 @@
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:admin": "cd admin && npm run dev",
-    "build": "npm run build:frontend && npm run build:admin",
+    "build": "npm run install:all && npm run build:frontend && npm run build:admin",
     "build:frontend": "cd frontend && npm run build",
     "build:admin": "cd admin && npm run build",
-    "start": "cd backend && npm start",
+    "start": "node backend/server.js",
     "setup:admin": "cd backend && node scripts/setup-admin.js"
   },
   "devDependencies": {
