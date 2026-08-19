@@ -4,6 +4,8 @@ import { AdsProvider } from './context/AdsContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AppOpenAd from './components/AppOpenAd';
+import GlobalAdScript from './components/GlobalAdScript';
+import BannerAd from './components/BannerAd';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -24,6 +26,7 @@ const Layout = ({ children }) => {
     <div className="app-container">
       {!isWatchPage && <Navbar />}
       <main className="main-content" style={{ paddingTop: isWatchPage ? 0 : '64px' }}>
+        {!isWatchPage && <BannerAd placement="bannerHeader" />}
         {children}
       </main>
       {!isWatchPage && <Footer />}
@@ -34,6 +37,7 @@ const Layout = ({ children }) => {
 const App = () => {
   return (
     <AdsProvider>
+      <GlobalAdScript />
       <Router>
         <AppOpenAd />
         <Layout>

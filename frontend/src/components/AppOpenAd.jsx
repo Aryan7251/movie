@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAds } from '../hooks/useAds';
+import CustomAdRenderer from './CustomAdRenderer';
 import './AppOpenAd.css';
 
 const AppOpenAd = () => {
@@ -34,13 +35,27 @@ const AppOpenAd = () => {
 
   if (!isVisible) return null;
 
+  const ad = config?.appOpen;
+
   return (
     <div className="app-open-ad-overlay">
       <div className="app-open-ad-content">
-        {config?.appOpen?.title && <h2>{config.appOpen.title}</h2>}
-        {config?.appOpen?.imageUrl && (
-          <img src={config.appOpen.imageUrl} alt="Advertisement" />
+        {ad?.title && <h2>{ad.title}</h2>}
+        
+        {ad?.mode === 'custom_code' && ad?.customCode ? (
+          <CustomAdRenderer code={ad.customCode} className="app-open-custom-ad" />
+        ) : (
+          ad?.imageUrl && (
+            <a 
+              href={ad.clickUrl && ad.clickUrl !== '#' ? ad.clickUrl : undefined} 
+              target={ad.clickUrl && ad.clickUrl !== '#' ? '_blank' : undefined} 
+              rel="noopener noreferrer"
+            >
+              <img src={ad.imageUrl} alt={ad.title || 'Advertisement'} />
+            </a>
+          )
         )}
+
         <div className="ad-controls">
           {!canSkip ? (
             <span className="countdown">You can skip in {timeLeft}s</span>

@@ -199,3 +199,55 @@
   line-height: 1.6;
   margin: 0;
 }
+
+/* Mobile Responsive Optimization for all screens */
+@media (max-width: 768px) {
+  .watch-header {
+    padding: 0.6rem 1rem;
+  }
+
+  .watch-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .watch-main-info {
+    padding: 1.25rem 0.85rem;
+    border-radius: var(--radius-md);
+  }
+
+  .watch-action-bar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .watch-pill-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.825rem;
+  }
+
+  .watch-meta-left {
+    gap: 0.85rem;
+    font-size: 0.825rem;
+  }
+
+  .watch-description-box {
+    padding: 1rem 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .watch-movie-title {
+    font-size: 1.25rem;
+  }
+
+  .watch-meta-item {
+    font-size: 0.75rem;
+  }
+
+  .watch-genre-tag {
+    font-size: 0.725rem;
+    padding: 0.25rem 0.6rem;
+  }
+}

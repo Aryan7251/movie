@@ -20,11 +20,13 @@ export const parseVideoSource = (url) => {
     return { type: 'unknown', rawUrl: '' };
   }
 
-  const trimmed = url.trim();
+  let cleanUrl = url.trim();
 
   // Extract from <iframe> tag if user pasted embed code
-  const iframeSrcMatch = trimmed.match(/<iframe.*?src=["'](.*?)["']/i);
-  const cleanUrl = iframeSrcMatch ? iframeSrcMatch[1] : trimmed;
+  const iframeSrcMatch = cleanUrl.match(/<iframe.*?src=["'](.*?)["']/i);
+  if (iframeSrcMatch) {
+    cleanUrl = iframeSrcMatch[1];
+  }
 
   // 1. YouTube detection
   const ytMatch = cleanUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
@@ -64,18 +66,19 @@ export const parseVideoSource = (url) => {
     };
   }
 
-  // 4. Other third-party iframe embed URLs (e.g. Google Drive preview, Streamtape, Doodstream, etc.)
-  if (cleanUrl.includes('/embed') || cleanUrl.includes('/preview') || cleanUrl.includes('/e/')) {
+  // 4. Check if direct video file extensions
+  const isDirectVideo = /\.(mp4|webm|ogg|m4v|mov|m3u8)(\?.*)?$/i.test(cleanUrl) || cleanUrl.startsWith('/api/stream') || cleanUrl.startsWith('/uploads/');
+  if (isDirectVideo) {
     return {
-      type: 'embed',
-      embedUrl: cleanUrl,
+      type: 'direct',
       rawUrl: cleanUrl
     };
   }
 
-  // 5. Direct video stream or local uploaded file
+  // 5. ANY other streaming / embed URL from any website
   return {
-    type: 'direct',
+    type: 'embed',
+    embedUrl: cleanUrl,
     rawUrl: cleanUrl
   };
 };

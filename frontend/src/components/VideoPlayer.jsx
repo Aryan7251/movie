@@ -8,13 +8,15 @@ export const parseVideoSource = (url) => {
     return { type: 'unknown', rawUrl: '' };
   }
 
-  const trimmed = url.trim();
+  let cleanUrl = url.trim();
 
-  // Extract from <iframe> tag if user pasted embed code
-  const iframeSrcMatch = trimmed.match(/<iframe.*?src=["'](.*?)["']/i);
-  const cleanUrl = iframeSrcMatch ? iframeSrcMatch[1] : trimmed;
+  // Extract from <iframe> tag if user pasted full embed code
+  const iframeSrcMatch = cleanUrl.match(/<iframe.*?src=["'](.*?)["']/i);
+  if (iframeSrcMatch) {
+    cleanUrl = iframeSrcMatch[1];
+  }
 
-  // 1. YouTube detection
+  // 1. YouTube detection (standard, short, embed, shorts, mobile, nocookie)
   const ytMatch = cleanUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
   if (ytMatch && ytMatch[1]) {
     const videoId = ytMatch[1];
@@ -23,6 +25,7 @@ export const parseVideoSource = (url) => {
       videoId,
       embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`,
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      maxThumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       rawUrl: cleanUrl
     };
   }
@@ -51,18 +54,19 @@ export const parseVideoSource = (url) => {
     };
   }
 
-  // 4. Other third-party iframe embed URLs
-  if (cleanUrl.includes('/embed') || cleanUrl.includes('/preview') || cleanUrl.includes('/e/')) {
+  // 4. Check if direct video file extensions (.mp4, .webm, .ogg, .m4v, .mov, .m3u8, /api/stream, /uploads/)
+  const isDirectVideo = /\.(mp4|webm|ogg|m4v|mov|m3u8)(\?.*)?$/i.test(cleanUrl) || cleanUrl.startsWith('/api/stream') || cleanUrl.startsWith('/uploads/');
+  if (isDirectVideo) {
     return {
-      type: 'embed',
-      embedUrl: cleanUrl,
+      type: 'direct',
       rawUrl: cleanUrl
     };
   }
 
-  // 5. Direct video stream or local uploaded file
+  // 5. ANY other URL from ANY website (Google Drive, Streamtape, DoodStream, Mega, Ok.ru, Facebook, Streamwish, LuluStream, or any streaming web link!)
   return {
-    type: 'direct',
+    type: 'embed',
+    embedUrl: cleanUrl,
     rawUrl: cleanUrl
   };
 };

@@ -4,6 +4,7 @@ import { ArrowLeft, ThumbsUp, Share2, Eye, Calendar, Clock, Film } from 'lucide-
 import VideoPlayer from '../components/VideoPlayer';
 import ShareModal from '../components/ShareModal';
 import CommentSection from '../components/CommentSection';
+import BannerAd from '../components/BannerAd';
 import { useMovie } from '../hooks/useMovies';
 import { likeMovie } from '../services/api';
 import ErrorState from '../components/ErrorState';
@@ -93,6 +94,8 @@ const WatchPage = () => {
       <div className="player-wrapper">
         <VideoPlayer videoUrl={movie.videoUrl || `/api/stream/${id}`} />
       </div>
+
+      <BannerAd placement="bannerWatchPage" />
       
       <div className="watch-container">
         <div className="watch-main-info">

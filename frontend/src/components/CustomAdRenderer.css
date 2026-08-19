@@ -1,0 +1,25 @@
+.custom-ad-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.custom-ad-container iframe {
+  max-width: 100% !important;
+  border: none;
+}
+
+.custom-ad-container img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.custom-ad-container ins.adsbygoogle {
+  display: block !important;
+  margin: 0 auto !important;
+}

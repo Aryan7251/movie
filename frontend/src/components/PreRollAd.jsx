@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAds } from '../hooks/useAds';
+import CustomAdRenderer from './CustomAdRenderer';
 import './PreRollAd.css';
 
 const PreRollAd = ({ onComplete }) => {
@@ -36,13 +37,27 @@ const PreRollAd = ({ onComplete }) => {
 
   if (!isVisible) return null;
 
+  const ad = config?.preRoll;
+
   return (
     <div className="preroll-ad-container">
       <div className="preroll-ad-content">
-        {config?.preRoll?.title && <h3>{config.preRoll.title}</h3>}
-        {config?.preRoll?.imageUrl && (
-          <img src={config.preRoll.imageUrl} alt="Advertisement" />
+        {ad?.title && <h3>{ad.title}</h3>}
+        
+        {ad?.mode === 'custom_code' && ad?.customCode ? (
+          <CustomAdRenderer code={ad.customCode} className="preroll-custom-ad" />
+        ) : (
+          ad?.imageUrl && (
+            <a 
+              href={ad.clickUrl && ad.clickUrl !== '#' ? ad.clickUrl : undefined} 
+              target={ad.clickUrl && ad.clickUrl !== '#' ? '_blank' : undefined} 
+              rel="noopener noreferrer"
+            >
+              <img src={ad.imageUrl} alt={ad.title || 'Advertisement'} />
+            </a>
+          )
         )}
+
         <div className="ad-controls">
           {!canSkip ? (
             <span className="countdown">Ad finishes in {timeLeft}s</span>
