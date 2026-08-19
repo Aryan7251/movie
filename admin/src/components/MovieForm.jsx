@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Upload, 
   Film, 
@@ -10,9 +10,75 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Play, 
+  Sparkles,
   ExternalLink 
 } from 'lucide-react';
 import './MovieForm.css';
+
+export const parseVideoSource = (url) => {
+  if (!url || typeof url !== 'string') {
+    return { type: 'unknown', rawUrl: '' };
+  }
+
+  const trimmed = url.trim();
+
+  // Extract from <iframe> tag if user pasted embed code
+  const iframeSrcMatch = trimmed.match(/<iframe.*?src=["'](.*?)["']/i);
+  const cleanUrl = iframeSrcMatch ? iframeSrcMatch[1] : trimmed;
+
+  // 1. YouTube detection
+  const ytMatch = cleanUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    const videoId = ytMatch[1];
+    return {
+      type: 'youtube',
+      videoId,
+      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`,
+      thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      maxThumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      rawUrl: cleanUrl
+    };
+  }
+
+  // 2. Vimeo detection
+  const vimeoMatch = cleanUrl.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)(\d+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    const videoId = vimeoMatch[1];
+    return {
+      type: 'vimeo',
+      videoId,
+      embedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=1`,
+      rawUrl: cleanUrl
+    };
+  }
+
+  // 3. Dailymotion detection
+  const dmMatch = cleanUrl.match(/(?:dailymotion\.com\/(?:video|embed\/video)\/|dai\.ly\/)([a-zA-Z0-9]+)/i);
+  if (dmMatch && dmMatch[1]) {
+    const videoId = dmMatch[1];
+    return {
+      type: 'dailymotion',
+      videoId,
+      embedUrl: `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1`,
+      rawUrl: cleanUrl
+    };
+  }
+
+  // 4. Other third-party iframe embed URLs (e.g. Google Drive preview, Streamtape, Doodstream, etc.)
+  if (cleanUrl.includes('/embed') || cleanUrl.includes('/preview') || cleanUrl.includes('/e/')) {
+    return {
+      type: 'embed',
+      embedUrl: cleanUrl,
+      rawUrl: cleanUrl
+    };
+  }
+
+  // 5. Direct video stream or local uploaded file
+  return {
+    type: 'direct',
+    rawUrl: cleanUrl
+  };
+};
 
 const formatFileSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 B';
@@ -57,6 +123,8 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
 
   const posterInputRef = useRef(null);
   const videoInputRef = useRef(null);
+
+  const videoSourceInfo = useMemo(() => parseVideoSource(videoLink), [videoLink]);
 
   useEffect(() => {
     if (initialData) {
@@ -141,6 +209,19 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
     }
   };
 
+  const handleApplyYouTubeThumbnail = () => {
+    if (videoSourceInfo.type === 'youtube' && videoSourceInfo.thumbnailUrl) {
+      setPosterSource('link');
+      setPosterLink(videoSourceInfo.thumbnailUrl);
+      setPosterPreview(videoSourceInfo.thumbnailUrl);
+      setPosterLinkLoaded(true);
+      setPosterLinkError(false);
+      if (errors.poster) {
+        setErrors(prev => ({ ...prev, poster: null }));
+      }
+    }
+  };
+
   // Video Handlers
   const handleVideoFileChange = (e) => {
     const file = e.target.files[0];
@@ -161,7 +242,12 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
   };
 
   const handleVideoLinkChange = (e) => {
-    const url = e.target.value;
+    let url = e.target.value;
+    // Auto extract src if user pasted iframe code
+    const iframeMatch = url.match(/<iframe.*?src=["'](.*?)["']/i);
+    if (iframeMatch) {
+      url = iframeMatch[1];
+    }
     setVideoLink(url);
     setVideoTestError(false);
     setShowVideoTest(false);
@@ -457,6 +543,18 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
                   )}
                 </div>
 
+                {videoSourceInfo.type === 'youtube' && videoSourceInfo.thumbnailUrl && (
+                  <button
+                    type="button"
+                    className="youtube-thumb-btn"
+                    onClick={handleApplyYouTubeThumbnail}
+                    title="Use YouTube thumbnail as poster image"
+                  >
+                    <Sparkles size={13} />
+                    <span>Auto-use YouTube Thumbnail</span>
+                  </button>
+                )}
+
                 <div className="link-preview-box">
                   {posterLink ? (
                     <div className="link-preview-content">
@@ -575,7 +673,7 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
                   <LinkIcon size={15} className="url-icon" />
                   <input
                     type="url"
-                    placeholder="https://example.com/movie.mp4"
+                    placeholder="https://youtube.com/watch?v=... or direct MP4/stream URL"
                     value={videoLink}
                     onChange={handleVideoLinkChange}
                     className={`url-input ${errors.video ? 'error' : ''}`}
@@ -592,9 +690,40 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
                   )}
                 </div>
 
+                {/* Detected Source Tag */}
+                {videoLink && (
+                  <div className="detected-source-badge">
+                    {videoSourceInfo.type === 'youtube' && (
+                      <span className="badge-pill youtube">
+                        🔴 YouTube Video ({videoSourceInfo.videoId})
+                      </span>
+                    )}
+                    {videoSourceInfo.type === 'vimeo' && (
+                      <span className="badge-pill vimeo">
+                        🔵 Vimeo Video ({videoSourceInfo.videoId})
+                      </span>
+                    )}
+                    {videoSourceInfo.type === 'dailymotion' && (
+                      <span className="badge-pill dailymotion">
+                        🟢 Dailymotion Video
+                      </span>
+                    )}
+                    {videoSourceInfo.type === 'embed' && (
+                      <span className="badge-pill embed">
+                        🟡 Third-Party Embed Stream
+                      </span>
+                    )}
+                    {videoSourceInfo.type === 'direct' && (
+                      <span className="badge-pill direct">
+                        🟣 Direct Video Stream
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="video-link-meta">
                   <span className="helper-text">
-                    Direct MP4/WebM URL or external stream link.
+                    Paste YouTube, Vimeo, Dailymotion, embed URL, or direct MP4 stream.
                   </span>
                   {videoLink && (
                     <button
@@ -610,13 +739,23 @@ const MovieForm = ({ initialData, onSubmit, isLoading }) => {
 
                 {showVideoTest && videoLink && (
                   <div className="video-test-player-container">
-                    <video
-                      src={videoLink}
-                      controls
-                      className="test-video-element"
-                      onError={() => setVideoTestError(true)}
-                      onLoadedData={() => setVideoTestError(false)}
-                    />
+                    {videoSourceInfo.type === 'youtube' || videoSourceInfo.type === 'vimeo' || videoSourceInfo.type === 'dailymotion' || videoSourceInfo.type === 'embed' ? (
+                      <iframe
+                        src={videoSourceInfo.embedUrl}
+                        title="Test Embed Player"
+                        className="test-video-iframe"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={videoSourceInfo.rawUrl}
+                        controls
+                        className="test-video-element"
+                        onError={() => setVideoTestError(true)}
+                        onLoadedData={() => setVideoTestError(false)}
+                      />
+                    )}
                     {videoTestError && (
                       <div className="preview-status error">
                         <AlertCircle size={13} />

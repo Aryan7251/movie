@@ -91,7 +91,7 @@ const WatchPage = () => {
       </div>
       
       <div className="player-wrapper">
-        <VideoPlayer videoUrl={`/api/stream/${id}`} />
+        <VideoPlayer videoUrl={movie.videoUrl || `/api/stream/${id}`} />
       </div>
       
       <div className="watch-container">
