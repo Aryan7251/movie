@@ -21,7 +21,7 @@ export const parseVideoSource = (url) => {
     return {
       type: 'youtube',
       videoId,
-      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`,
+      embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`,
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       rawUrl: cleanUrl
     };
@@ -203,6 +203,7 @@ const VideoPlayer = ({ videoUrl }) => {
             src={source.embedUrl}
             title="Video Player"
             className="video-iframe-element"
+            referrerPolicy="strict-origin-when-cross-origin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />

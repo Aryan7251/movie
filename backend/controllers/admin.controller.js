@@ -69,11 +69,11 @@ export const createMovie = async (req, res, next) => {
     }
 
     const movie = await Movie.create({
-      title,
-      description,
+      title: title ? title.trim() : '',
+      description: description ? description.trim() : '',
       genre: genre ? (Array.isArray(genre) ? genre : genre.split(',').map(g => g.trim()).filter(Boolean)) : [],
-      releaseYear: releaseYear ? parseInt(releaseYear, 10) : undefined,
-      duration: duration ? parseInt(duration, 10) : undefined,
+      releaseYear: releaseYear && !isNaN(parseInt(releaseYear, 10)) ? parseInt(releaseYear, 10) : undefined,
+      duration: duration && !isNaN(parseInt(duration, 10)) ? parseInt(duration, 10) : 0,
       featured: featured === 'true' || featured === true,
       published: published === 'true' || published === true,
       posterUrl,
@@ -96,13 +96,17 @@ export const updateMovie = async (req, res, next) => {
 
     const { title, description, genre, releaseYear, duration, featured, published, posterUrl: bodyPosterUrl, videoUrl: bodyVideoUrl } = req.body;
     
-    movie.title = title || movie.title;
-    if (description !== undefined) movie.description = description;
+    if (title !== undefined) movie.title = title.trim();
+    if (description !== undefined) movie.description = description.trim();
     if (genre !== undefined) {
       movie.genre = Array.isArray(genre) ? genre : genre.split(',').map(g => g.trim()).filter(Boolean);
     }
-    if (releaseYear !== undefined) movie.releaseYear = parseInt(releaseYear, 10);
-    if (duration !== undefined) movie.duration = parseInt(duration, 10);
+    if (releaseYear !== undefined) {
+      movie.releaseYear = releaseYear && !isNaN(parseInt(releaseYear, 10)) ? parseInt(releaseYear, 10) : undefined;
+    }
+    if (duration !== undefined) {
+      movie.duration = duration && !isNaN(parseInt(duration, 10)) ? parseInt(duration, 10) : 0;
+    }
     if (featured !== undefined) movie.featured = featured === 'true' || featured === true;
     if (published !== undefined) movie.published = published === 'true' || published === true;
 

@@ -41,7 +41,8 @@ connectDB();
 
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginResourcePolicy: false
+  crossOriginResourcePolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
 const allowedOrigins = [
