@@ -14,6 +14,10 @@ export const streamVideo = async (req, res, next) => {
       throw new Error('Video file not found');
     }
 
+    if (movie.videoUrl.startsWith('http://') || movie.videoUrl.startsWith('https://')) {
+      return res.redirect(movie.videoUrl);
+    }
+
     const filePath = storageService.getFilePath(movie.videoUrl);
     const range = req.headers.range;
 

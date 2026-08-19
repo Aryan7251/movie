@@ -41,9 +41,16 @@ class LocalStorageService extends StorageService {
   }
 
   async delete(filePath) {
+    if (!filePath || filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return;
+    }
     const fullPath = path.join(process.cwd(), 'public', filePath);
     if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
+      try {
+        fs.unlinkSync(fullPath);
+      } catch (err) {
+        console.error('Failed to delete file:', err);
+      }
     }
   }
 

@@ -54,16 +54,16 @@ export const getAdminMovieById = async (req, res, next) => {
 
 export const createMovie = async (req, res, next) => {
   try {
-    const { title, description, genre, releaseYear, duration, featured, published } = req.body;
+    const { title, description, genre, releaseYear, duration, featured, published, posterUrl: bodyPosterUrl, videoUrl: bodyVideoUrl } = req.body;
     
-    let posterUrl = '';
-    let videoUrl = '';
+    let posterUrl = bodyPosterUrl || '';
+    let videoUrl = bodyVideoUrl || '';
 
     if (req.files) {
-      if (req.files.poster) {
+      if (req.files.poster && req.files.poster.length > 0) {
         posterUrl = await storageService.upload(req.files.poster[0], 'poster');
       }
-      if (req.files.video) {
+      if (req.files.video && req.files.video.length > 0) {
         videoUrl = await storageService.upload(req.files.video[0], 'video');
       }
     }
@@ -71,11 +71,11 @@ export const createMovie = async (req, res, next) => {
     const movie = await Movie.create({
       title,
       description,
-      genre: genre ? genre.split(',').map(g => g.trim()) : [],
-      releaseYear: releaseYear ? parseInt(releaseYear) : undefined,
-      duration: duration ? parseInt(duration) : undefined,
-      featured: featured === 'true',
-      published: published === 'true',
+      genre: genre ? (Array.isArray(genre) ? genre : genre.split(',').map(g => g.trim()).filter(Boolean)) : [],
+      releaseYear: releaseYear ? parseInt(releaseYear, 10) : undefined,
+      duration: duration ? parseInt(duration, 10) : undefined,
+      featured: featured === 'true' || featured === true,
+      published: published === 'true' || published === true,
       posterUrl,
       videoUrl
     });
@@ -94,25 +94,42 @@ export const updateMovie = async (req, res, next) => {
       throw new Error('Movie not found');
     }
 
-    const { title, description, genre, releaseYear, duration, featured, published } = req.body;
+    const { title, description, genre, releaseYear, duration, featured, published, posterUrl: bodyPosterUrl, videoUrl: bodyVideoUrl } = req.body;
     
     movie.title = title || movie.title;
     if (description !== undefined) movie.description = description;
-    if (genre !== undefined) movie.genre = genre.split(',').map(g => g.trim());
-    if (releaseYear !== undefined) movie.releaseYear = parseInt(releaseYear);
-    if (duration !== undefined) movie.duration = parseInt(duration);
-    if (featured !== undefined) movie.featured = featured === 'true';
-    if (published !== undefined) movie.published = published === 'true';
+    if (genre !== undefined) {
+      movie.genre = Array.isArray(genre) ? genre : genre.split(',').map(g => g.trim()).filter(Boolean);
+    }
+    if (releaseYear !== undefined) movie.releaseYear = parseInt(releaseYear, 10);
+    if (duration !== undefined) movie.duration = parseInt(duration, 10);
+    if (featured !== undefined) movie.featured = featured === 'true' || featured === true;
+    if (published !== undefined) movie.published = published === 'true' || published === true;
 
-    if (req.files) {
-      if (req.files.poster) {
-        if (movie.posterUrl) await storageService.delete(movie.posterUrl);
-        movie.posterUrl = await storageService.upload(req.files.poster[0], 'poster');
+    // Handle poster update (uploaded file vs link URL)
+    if (req.files?.poster && req.files.poster.length > 0) {
+      if (movie.posterUrl && movie.posterUrl.startsWith('/uploads/')) {
+        await storageService.delete(movie.posterUrl);
       }
-      if (req.files.video) {
-        if (movie.videoUrl) await storageService.delete(movie.videoUrl);
-        movie.videoUrl = await storageService.upload(req.files.video[0], 'video');
+      movie.posterUrl = await storageService.upload(req.files.poster[0], 'poster');
+    } else if (bodyPosterUrl !== undefined) {
+      if (movie.posterUrl && movie.posterUrl.startsWith('/uploads/') && movie.posterUrl !== bodyPosterUrl) {
+        await storageService.delete(movie.posterUrl);
       }
+      movie.posterUrl = bodyPosterUrl;
+    }
+
+    // Handle video update (uploaded file vs link URL)
+    if (req.files?.video && req.files.video.length > 0) {
+      if (movie.videoUrl && movie.videoUrl.startsWith('/uploads/')) {
+        await storageService.delete(movie.videoUrl);
+      }
+      movie.videoUrl = await storageService.upload(req.files.video[0], 'video');
+    } else if (bodyVideoUrl !== undefined) {
+      if (movie.videoUrl && movie.videoUrl.startsWith('/uploads/') && movie.videoUrl !== bodyVideoUrl) {
+        await storageService.delete(movie.videoUrl);
+      }
+      movie.videoUrl = bodyVideoUrl;
     }
 
     const updatedMovie = await movie.save();
@@ -160,8 +177,12 @@ export const deleteMovie = async (req, res, next) => {
       throw new Error('Movie not found');
     }
 
-    if (movie.posterUrl) await storageService.delete(movie.posterUrl);
-    if (movie.videoUrl) await storageService.delete(movie.videoUrl);
+    if (movie.posterUrl && movie.posterUrl.startsWith('/uploads/')) {
+      await storageService.delete(movie.posterUrl);
+    }
+    if (movie.videoUrl && movie.videoUrl.startsWith('/uploads/')) {
+      await storageService.delete(movie.videoUrl);
+    }
 
     await movie.deleteOne();
     res.json({ success: true, message: 'Movie removed' });
